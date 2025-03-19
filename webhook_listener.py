@@ -7,6 +7,8 @@ from datetime import datetime
 
 app = Flask(__name__)
 
+processed_event_ids = set()
+
 logging.basicConfig(filename='webhook_listener.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -38,30 +40,38 @@ def get_daily_video_count(date_str):
 def webhook():
     try:
         data = request.get_json()
-        relative_path = data.get('RelativePath')
+        EventId = data.get('EventId')
+        EventType = data.get('EventType')
+        EventData = data.get('EventData')
+        relative_path = EventData.get('RelativePath')
+
+        # Check if the EventId has already been processed
+        if EventId in processed_event_ids:
+            logging.info(f"Event {EventId} has already been processed, ignoring.")
+            return "Event already processed", 200
 
         if not relative_path:
             logging.error("Missing RelativePath in webhook data")
             return "Missing RelativePath", 204
         
-        if relative_path.endswith('.flv'):
-            video_file = relative_path
-            danmaku_file = None
-        elif relative_path.endswith('.xml'):
-            video_file = None
-            danmaku_file = relative_path
-        else:
-            logging.error(f"Unsupported file type: {relative_path}")
-            return "Unsupported file type", 204
+        if EventType == 'FileClosed':
+            if relative_path.endswith('.flv'):
+                video_file = relative_path
+                danmaku_file = None
+            elif relative_path.endswith('.xml'):
+                video_file = None
+                danmaku_file = relative_path
+            else:
+                logging.error(f"Unsupported file type: {relative_path}")
+                return "Unsupported file type", 204
 
-        if not video_file or not danmaku_file:
-            logging.error("Missing video_file or danmaku_file in webhook data")
-            return "Missing file path or danmu path", 204
-
-        if is_video_processed(video_file):
-            logging.info(f"Video {video_file} has already been processed, skipping.")
-            return "Video already processed", 200
-
+            # Check if we have both video and danmaku files
+            if hasattr(webhook, 'video_file') and hasattr(webhook, 'danmaku_file'):
+                video_file = webhook.video_file
+                danmaku_file = webhook.danmaku_file
+                delattr(webhook, 'video_file')
+                delattr(webhook, 'danmaku_file')
+                
         # Access date of recording
         now = datetime.now()
         date_str = now.strftime("%Y%m%d")
