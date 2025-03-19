@@ -69,7 +69,7 @@ If you directly download the executable file from Release, you can run it withou
 * Install all requirements
 * Install LiveRecBot
  ```
-    pyinstaller --onefile --windowed -i LRB.ico LiveRecBot.py
+    pyinstaller --onefile --windowed --distpath LiveRecBot -i LRB.ico LiveRecBot.py
 ```
 * Go to the dist directory and run __LiveRecBot.exe__
 * The default file directory would be created in the same directory as the executable as you run it.
@@ -95,6 +95,7 @@ If you directly download the executable file from Release, you can run it withou
 * Set webhook interface inside Danmuji: https://host:port//webhook (__The default port is 5000__)
 * Enter the webhook interface address in the Webhook text box.
 * Click __Start Listening__. You can close the window now and the program will continue to run in the background.
+* __Check the app.log to see if the interface is working.__
 
 ## File Directory
 

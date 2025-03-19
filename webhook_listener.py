@@ -38,11 +38,25 @@ def get_daily_video_count(date_str):
 def webhook():
     try:
         data = request.get_json()
-        video_file = data.get('file path')
-        danmaku_file = data.get('danmu path')
+        relative_path = data.get('RelativePath')
+
+        if not relative_path:
+            logging.error("Missing RelativePath in webhook data")
+            return "Missing RelativePath", 204
+        
+        if relative_path.endswith('.flv'):
+            video_file = relative_path
+            danmaku_file = None
+        elif relative_path.endswith('.xml'):
+            video_file = None
+            danmaku_file = relative_path
+        else:
+            logging.error(f"Unsupported file type: {relative_path}")
+            return "Unsupported file type", 204
+
         if not video_file or not danmaku_file:
             logging.error("Missing video_file or danmaku_file in webhook data")
-            return "Missing video_file or danmaku_file", 204
+            return "Missing file path or danmu path", 204
 
         if is_video_processed(video_file):
             logging.info(f"Video {video_file} has already been processed, skipping.")
