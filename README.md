@@ -3,6 +3,8 @@
 
 **********
 
+[中文README| Chinese](README_CN.md)
+
 ## Introduction
 
 **********
@@ -90,7 +92,6 @@ If you directly download the executable file from Release, you can run it withou
 * Click __Process Danmaku Only__ to start processing.
 
 #### Auto suppress and generate hot clips
-* Click __Select Video File__ and __Select Danmaku File__ to choose files to be processed.
 * Click __Select Video Output Path__ and __Select Image Output Path__ to set the out put file path.
 * Set webhook interface inside Danmuji: https://host:port//webhook (__The default port is 5000__)
 * Enter the webhook interface address in the Webhook text box.
