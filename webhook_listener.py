@@ -71,24 +71,33 @@ def webhook():
                 danmaku_file = webhook.danmaku_file
                 delattr(webhook, 'video_file')
                 delattr(webhook, 'danmaku_file')
-                
-        # Access date of recording
-        now = datetime.now()
-        date_str = now.strftime("%Y%m%d")
-        # Access video number
-        video_count = get_daily_video_count(date_str) + 1
 
-        # Generate full video name
-        output_video_name = f"{date_str}_{video_count:03d}"
-        # Generate output path
-        output_video = os.path.join(global_vars.OUTPUT_VIDEO_DIR, f"{output_video_name}.mp4")
-        image_path = os.path.join(global_vars.OUTPUT_IMAGE_DIR, f"{output_video_name}_danmaku_density.png")
-        output_clips_sub_dir = os.path.join(global_vars.OUTPUT_CLIPS_DIR, output_video_name)
-        os.makedirs(output_clips_sub_dir, exist_ok=True)
+                # Access date of recording
+                now = datetime.now()
+                date_str = now.strftime("%Y%m%d")
+                # Access video number
+                video_count = get_daily_video_count(date_str) + 1
 
-        process_video(video_file, danmaku_file, output_video, image_path, output_clips_sub_dir)
-        mark_video_processed(video_file)
-        return "Video processing completed", 200
+                # Generate full video name
+                output_video_name = f"{date_str}_{video_count:03d}"
+                # Generate output path
+                output_video = os.path.join(global_vars.OUTPUT_VIDEO_DIR, f"{output_video_name}.mp4")
+                image_path = os.path.join(global_vars.OUTPUT_IMAGE_DIR, f"{output_video_name}_danmaku_density.png")
+                output_clips_sub_dir = os.path.join(global_vars.OUTPUT_CLIPS_DIR, output_video_name)
+                os.makedirs(output_clips_sub_dir, exist_ok=True)
+
+                processed_event_ids.add(EventId)
+                return "Clips processed", 200
+            elif video_file:
+                webhook.video_file = video_file
+                return "Waiting for danmaku file", 200
+            elif danmaku_file:
+                webhook.danmaku_file = danmaku_file
+                return "Waiting for video file", 200
+        else:
+            logging.info(f"Received event of type {EventType}, ignoring.")
+            return "Event received and ignored", 200
+        
     except Exception as e:
         logging.error(f"Error handling webhook: {e}")
         return f"Error handling webhook: {e}", 500
