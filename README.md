@@ -71,7 +71,7 @@ If you directly download the executable file from Release, you can run it withou
 * Install all requirements
 * Install LiveRecBot
  ```
-    pyinstaller --onefile --windowed -i LRB.ico LiveRecBot.py
+    pyinstaller --onefile --windowed --dist LiveRecBot -i LRB.ico LiveRecBot.py
 ```
 * Go to the LiveRecBot directory and run __LiveRecBot.exe__
 * The default file directory would be created in the same directory as the executable as you run it.

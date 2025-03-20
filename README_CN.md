@@ -70,7 +70,7 @@
 * 安装所有依赖
 * 安装LiveRecBot
 ```
-    pyinstaller --onefile --windowed -i LRB.ico LiveRecBot.py
+    pyinstaller --onefile --windowed --dist LiveRecBot -i LRB.ico LiveRecBot.py
 ```
 * 进入LiveRecBot目录，运行__LiveRecBot.exe__
 * 首次运行时会在该目录下新建默认文件夹以及app.log文件。
