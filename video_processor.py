@@ -8,7 +8,7 @@ from curve_plotter import plot_density_curve
 logging.basicConfig(filename='video_processing.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
-def process_video(video_file, danmaku_file, output_video, image_path, output_clips_dir):
+def process_video(video_file, danmaku_file, output_video.mp4, image_path, output_clips_dir):
     try:
         # Process video and danmaku
         logging.info(f"Starting video and danmaku muxing for {video_file}")
