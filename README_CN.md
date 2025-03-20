@@ -3,6 +3,8 @@
 
 **********
 
+[英文README| English](README.md)
+
 ## 介绍
 
 **********
