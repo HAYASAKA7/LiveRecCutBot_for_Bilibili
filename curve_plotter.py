@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import subprocess
+from logger_config import setup_logger
+
+logger = setup_logger()
 
 # Set matplotlib to support Chinese
 plt.rcParams['font.sans-serif'] = ['SimHei']
@@ -83,14 +86,14 @@ def plot_density_curve(bins, density, minute_bins, minute_density, save_path, vi
                         '-to', str(clip_end * 60),
                         '-c', 'copy', output_file
                     ], check=True)
-                    print(f"Clipped video saved to {output_file}")
+                    logger.info(f"Clipped video saved to {output_file}")
                 except subprocess.CalledProcessError as e:
-                    print(f"Error clipping video: {e}")
+                    logger.info(f"Error clipping video: {e}")
 
     try:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         plt.savefig(save_path, dpi=300)
         plt.close()
     except OSError as e:
-        print(f"Error saving file: {e}")
+        logger.info(f"Error saving file: {e}")
     
