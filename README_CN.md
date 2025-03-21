@@ -3,7 +3,8 @@
 
 **********
 
-[英文README| English](README.md)
+[英文README | English](README.md)
+[日本語README | Japanese](README_JP.md)
 
 ## 介绍
 
