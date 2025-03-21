@@ -18,3 +18,6 @@
 
 ### 1.0.3 (2025-3-21)
 - Fix the bug that log file will always show 'Failed to show system tray icon' even if the system tray icon is shown successfully.
+
+### 1.0.4 (2025-3-21)
+- Fix window icon not showing bug.
