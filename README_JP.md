@@ -3,7 +3,7 @@
 
 **********
 
-[中文README| Chinese](README_CN.md)
+[中文README | Chinese](README_CN.md)
 <br>[英語README | English](README.md)
 
 ## 紹介
