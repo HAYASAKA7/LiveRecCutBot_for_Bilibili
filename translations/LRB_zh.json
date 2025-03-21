@@ -1,0 +1,20 @@
+{
+    "No video file selected": "未选择视频文件",
+    "No danmaku file selected": "未选择弹幕文件",
+    "Select Video File": "选择视频文件",
+    "Select Danmaku File": "选择弹幕文件",
+    "Process Video": "处理视频",
+    "Process Danmaku Only": "仅处理弹幕",
+    "Enter the Webhook interface address": "输入Webhook接口地址",
+    "Start Listening": "开始监听",
+    "Select Video Output Path": "选择视频输出路径",
+    "Select Image Output Path": "选择图像输出路径",
+    "Select Clips Output Path": "选择切片输出路径",
+    "Elapsed Time: 0s, Expected Time Left: N/A": "已用时间: 0秒, 预计剩余时间: N/A",
+    "Current": "当前",
+    "Default": "默认",
+    "Switch Language": "切换语言",
+    "English": "英语",
+    "Chinese": "中文",
+    "Japanese": "日语"
+}

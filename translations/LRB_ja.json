@@ -1,0 +1,20 @@
+{
+    "No video file selected": "ビデオファイルが選択されていません",
+    "No danmaku file selected": "弾幕ファイルが選択されていません",
+    "Select Video File": "ビデオファイルを選択",
+    "Select Danmaku File": "弾幕ファイルを選択",
+    "Process Video": "ビデオを処理",
+    "Process Danmaku Only": "弾幕のみを処理",
+    "Enter the Webhook interface address": "Webhookインターフェースアドレスを入力",
+    "Start Listening": "リスニングを開始",
+    "Select Video Output Path": "ビデオ出力パスを選択",
+    "Select Image Output Path": "画像出力パスを選択",
+    "Select Clips Output Path": "クリップ出力パスを選択",
+    "Elapsed Time: 0s, Expected Time Left: N/A": "経過時間: 0秒, 予想残り時間: N/A",
+    "Current": "現在",
+    "Default": "デフォルト",
+    "Switch Language": "言語を切り替え",
+    "English": "英語",
+    "Chinese": "中国語",
+    "Japanese": "日本語"
+}

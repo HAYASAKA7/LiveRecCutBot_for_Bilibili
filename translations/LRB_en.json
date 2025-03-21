@@ -1,0 +1,18 @@
+{
+    "No video file selected": "No video file selected",
+    "No danmaku file selected": "No danmaku file selected",
+    "Select Video File": "Select Video File",
+    "Select Danmaku File": "Select Danmaku File",
+    "Process Video": "Process Video",
+    "Process Danmaku Only": "Process Danmaku Only",
+    "Enter the Webhook interface address": "Enter the Webhook interface address",
+    "Start Listening": "Start Listening",
+    "Select Video Output Path": "Select Video Output Path",
+    "Select Image Output Path": "Select Image Output Path",
+    "Select Clips Output Path": "Select Clips Output Path",
+    "Elapsed Time: 0s, Expected Time Left: N/A": "Elapsed Time: 0s, Expected Time Left: N/A",
+    "Switch Language": "Switch Language",
+    "English": "English",
+    "Chinese": "Chinese",
+    "Japanese": "Japanese"
+}
