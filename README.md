@@ -4,7 +4,7 @@
 **********
 
 [中文README| Chinese](README_CN.md)
-[日本語README | Japanese](README_JP.md)
+<br>[日本語README | Japanese](README_JP.md)
 
 ## Introduction
 
