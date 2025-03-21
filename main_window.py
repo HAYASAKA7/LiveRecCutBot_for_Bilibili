@@ -10,6 +10,8 @@ from logger_config import setup_logger
 
 logger = setup_logger()
 
+CONFIG_FILE = "config.json"
+
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -21,7 +23,8 @@ class MainWindow(QWidget):
         self.current_image_output = self.default_image_output
         self.current_clips_output = self.default_clips_output
         self.translations = {}
-        self.load_translations("en")
+        self.language = self.load_language_preference()
+        self.load_translations(self.language)
         self.initUI()
         self.flask_thread = None
         self.start_time = None
@@ -30,6 +33,18 @@ class MainWindow(QWidget):
         self.setup_tray_icon()
 
         logger.info("Main window initialized.")
+
+    def load_language_preference(self):
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, "r", encoding="utf-8") as file:
+                config = json.load(file)
+                return config.get("language", "en")
+        return "en"
+
+    def save_language_preference(self, language):
+        config = {"language": language}
+        with open(CONFIG_FILE, "w", encoding="utf-8") as file:
+            json.dump(config, file)
 
     def load_translations(self, language):
         try:
@@ -49,6 +64,8 @@ class MainWindow(QWidget):
         return self.translations.get(text, text)
     def switch_language(self, language):
         try:
+            self.language = language
+            self.save_language_preference(language)
             self.load_translations(language)
             self.update_ui_texts()
         except Exception as e:
