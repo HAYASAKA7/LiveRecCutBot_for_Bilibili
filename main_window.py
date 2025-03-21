@@ -28,12 +28,14 @@ class MainWindow(QWidget):
         logger.info("Main window initialized.")
 
     def initUI(self):
+        icon_path = 'D:/Projects/Python/RecBot+AutoCut/LRB.png'
+        if not os.path.exists(icon_path):
+            logger.error(f"Icon file not found at {icon_path}")
+        else:
+            self.setWindowIcon(QIcon(icon_path))
+            logger.info("Window icon set.")
+
         layout = QGridLayout()
-
-        # self.stacked_widget = QStackedWidget()
-
-        # operation_page = QWidget()
-        # operation_layout = QGridLayout()
 
         # Set font and font size style
         font_style = "font-family: Arial; font-size: 14px;"
