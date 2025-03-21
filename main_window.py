@@ -261,9 +261,9 @@ class MainWindow(QWidget):
                 return
             self.tray_icon = QSystemTrayIcon(self)
             icon = QIcon(icon_path)
-            if icon.isNull():
-                logger.error(f"Failed to load icon from {icon_path}")
-                return
+            # if icon.isNull():
+            #     logger.error(f"Failed to load icon from {icon_path}")
+            #     return
             self.tray_icon.setIcon(icon)
             self.tray_icon.setToolTip('LiveReCBot')
             self.tray_icon.activated.connect(self.tray_icon_activated)
@@ -273,10 +273,8 @@ class MainWindow(QWidget):
             exit_action.triggered.connect(self.close_app)
 
             self.tray_icon.setContextMenu(menu)
-            if not self.tray_icon.show():
-                logger.error("Failed to show system tray icon")
-            else:
-                logger.info("System tray icon setup and shown.")
+            self.tray_icon.show()
+            logger.info("System tray icon setup and shown.")
         except Exception as e:
             logger.error(f"Error setting up system tray icon: {e}")
 

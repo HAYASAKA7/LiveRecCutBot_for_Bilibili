@@ -15,3 +15,6 @@
 
 ### 1.0.2 (2025-3-20)
 - Fix the bug that log info will show 4 times.(Add 'logger.propagate = False' in 'logger_config.py')
+
+### 1.0.3 (2025-3-21)
+- Fix the bug that log file will always shoe 'Failed to show system tray icon' even if the system tray icon is shown successfully.
