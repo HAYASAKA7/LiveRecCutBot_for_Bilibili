@@ -21,3 +21,7 @@
 
 ### 1.0.4 (2025-3-21)
 - Fix window icon not showing bug.
+
+### 1.0.5 (2025-3-21)
+- Add multi-language support.(English, Japanese, Chinese)
+- Multi-language still in progress. Now need to mannually drag 'translations' folder to the same directory as the executable.

@@ -1,6 +1,8 @@
 import os
+import sys
 import threading
 import time
+import json
 from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton, QFileDialog, QLabel, QLineEdit, QMessageBox, QProgressBar, QSystemTrayIcon, QMenu, QApplication,QStackedWidget,QTextEdit
 from PyQt5.QtGui import QIcon
 from flask_app import app
@@ -18,6 +20,8 @@ class MainWindow(QWidget):
         self.current_video_output = self.default_video_output
         self.current_image_output = self.default_image_output
         self.current_clips_output = self.default_clips_output
+        self.translations = {}
+        self.load_translations("en")
         self.initUI()
         self.flask_thread = None
         self.start_time = None
@@ -26,6 +30,56 @@ class MainWindow(QWidget):
         self.setup_tray_icon()
 
         logger.info("Main window initialized.")
+
+    def load_translations(self, language):
+        try:
+            base_path = getattr(sys, '_MEIPASS', os.path.abspath("."))
+            translation_file = os.path.join(base_path, f"translations/LRB_{language}.json")
+            with open(f"translations/LRB_{language}.json", "r", encoding="utf-8") as file:
+                self.translations = json.load(file)
+            logger.info(f"Loaded translation file: LRB_{language}.json")
+        except FileNotFoundError:
+            logger.warning(f"Translation file not found: LRB_{language}.json")
+            self.translations = {}
+        except json.JSONDecodeError as e:
+            logger.error(f"Error decoding JSON from translation file: {e}")
+            self.translations = {}
+
+    def tr(self, text):
+        return self.translations.get(text, text)
+    def switch_language(self, language):
+        try:
+            self.load_translations(language)
+            self.update_ui_texts()
+        except Exception as e:
+            logger.error(f"Error switching language: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to switch language: {e}")
+
+    def update_ui_texts(self):
+        try:
+            self.video_label.setText(self.tr("No video file selected"))
+            self.danmaku_label.setText(self.tr("No danmaku file selected"))
+            self.video_button.setText(self.tr("Select Video File"))
+            self.danmaku_button.setText(self.tr("Select Danmaku File"))
+            self.process_button.setText(self.tr("Process Video"))
+            self.process_danmaku_button.setText(self.tr("Process Danmaku Only"))
+            self.webhook_input.setPlaceholderText(self.tr("Enter the Webhook interface address"))
+            self.start_listening_button.setText(self.tr("Start Listening"))
+            self.select_video_output_button.setText(self.tr("Select Video Output Path"))
+            self.select_image_output_button.setText(self.tr("Select Image Output Path"))
+            self.video_output_label.setText(f"{self.tr('Default')}: {self.default_video_output}\n{self.tr('Current')}: {self.current_video_output}")
+            self.image_output_label.setText(f"{self.tr('Default')}: {self.default_image_output}\n{self.tr('Current')}: {self.current_image_output}")
+            self.clips_output_label.setText(f"{self.tr('Default')}: {self.default_clips_output}\n{self.tr('Current')}: {self.current_clips_output}")
+            self.select_clips_output_button.setText(self.tr("Select Clips Output Path"))
+            self.time_label.setText(self.tr("Elapsed Time: 0s, Expected Time Left: N/A"))
+            self.language_button.setText(self.tr("Switch Language"))
+            self.language_buttons.clear()
+            self.language_buttons.addAction(self.tr("English"), lambda: self.switch_language("en"))
+            self.language_buttons.addAction(self.tr("Chinese"), lambda: self.switch_language("zh"))
+            self.language_buttons.addAction(self.tr("Japanese"), lambda: self.switch_language("ja"))
+        except Exception as e:
+            logger.error(f"Error updating UI texts: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to update UI texts: {e}")
 
     def initUI(self):
         icon_path = 'D:/Projects/Python/RecBot+AutoCut/LRB.png'
@@ -48,26 +102,26 @@ class MainWindow(QWidget):
         self.danmaku_label.setStyleSheet(font_style)
         layout.addWidget(self.danmaku_label, 1, 0)
 
-        video_button = QPushButton("Select Video File")
-        video_button.setStyleSheet(font_style)
-        video_button.clicked.connect(self.select_video)
-        layout.addWidget(video_button, 2, 0)
+        self.video_button = QPushButton("Select Video File")
+        self.video_button.setStyleSheet(font_style)
+        self.video_button.clicked.connect(self.select_video)
+        layout.addWidget(self.video_button, 2, 0)
 
-        danmaku_button = QPushButton("Select Danmaku File")
-        danmaku_button.setStyleSheet(font_style)
-        danmaku_button.clicked.connect(self.select_danmaku)
-        layout.addWidget(danmaku_button, 3, 0)
+        self.danmaku_button = QPushButton("Select Danmaku File")
+        self.danmaku_button.setStyleSheet(font_style)
+        self.danmaku_button.clicked.connect(self.select_danmaku)
+        layout.addWidget(self.danmaku_button, 3, 0)
 
-        process_button = QPushButton("Process Video")
-        process_button.setStyleSheet(font_style)
-        process_button.clicked.connect(self.process_video)
-        layout.addWidget(process_button, 4, 0)
+        self.process_button = QPushButton("Process Video")
+        self.process_button.setStyleSheet(font_style)
+        self.process_button.clicked.connect(self.process_video)
+        layout.addWidget(self.process_button, 4, 0)
 
         # Add a button to process only danmaku file
-        process_danmaku_button = QPushButton("Process Danmaku Only")
-        process_danmaku_button.setStyleSheet(font_style)
-        process_danmaku_button.clicked.connect(self.process_danmaku_only)
-        layout.addWidget(process_danmaku_button, 5, 0)
+        self.process_danmaku_button = QPushButton("Process Danmaku Only")
+        self.process_danmaku_button.setStyleSheet(font_style)
+        self.process_danmaku_button.clicked.connect(self.process_danmaku_only)
+        layout.addWidget(self.process_danmaku_button, 5, 0)
 
         # Add an input box for the Webhook interface
         self.webhook_input = QLineEdit()
@@ -75,16 +129,16 @@ class MainWindow(QWidget):
         self.webhook_input.setPlaceholderText("Enter the Webhook interface address")
         layout.addWidget(self.webhook_input, 6, 0)
 
-        start_listening_button = QPushButton("Start Listening")
-        start_listening_button.setStyleSheet(font_style)
-        start_listening_button.clicked.connect(self.start_listening)
-        layout.addWidget(start_listening_button, 7, 0)
+        self.start_listening_button = QPushButton("Start Listening")
+        self.start_listening_button.setStyleSheet(font_style)
+        self.start_listening_button.clicked.connect(self.start_listening)
+        layout.addWidget(self.start_listening_button, 7, 0)
 
         # Add buttons to select output paths in the second column
-        select_video_output_button = QPushButton("Select Video Output Path")
-        select_video_output_button.setStyleSheet(font_style)
-        select_video_output_button.clicked.connect(self.select_video_output_path)
-        layout.addWidget(select_video_output_button, 0, 1)
+        self.select_video_output_button = QPushButton("Select Video Output Path")
+        self.select_video_output_button.setStyleSheet(font_style)
+        self.select_video_output_button.clicked.connect(self.select_video_output_path)
+        layout.addWidget(self.select_video_output_button, 0, 1)
 
         # Display the default path and selected path
         self.video_output_label = QLabel(f"Default: {self.default_video_output}\nCurrent: {self.current_video_output}")
@@ -92,10 +146,10 @@ class MainWindow(QWidget):
         layout.addWidget(self.video_output_label, 1, 1)
 
         # Add buttons to select output paths in the second column
-        select_image_output_button = QPushButton("Select Image Output Path")
-        select_image_output_button.setStyleSheet(font_style)
-        select_image_output_button.clicked.connect(self.select_image_output_path)
-        layout.addWidget(select_image_output_button, 2, 1)
+        self.select_image_output_button = QPushButton("Select Image Output Path")
+        self.select_image_output_button.setStyleSheet(font_style)
+        self.select_image_output_button.clicked.connect(self.select_image_output_path)
+        layout.addWidget(self.select_image_output_button, 2, 1)
 
         # Display the default path and selected path
         self.image_output_label = QLabel(f"Default: {self.default_image_output}\nCurrent: {self.current_image_output}")
@@ -103,10 +157,10 @@ class MainWindow(QWidget):
         layout.addWidget(self.image_output_label, 3, 1)
 
         # Add buttons to select output paths in the second column
-        select_clips_output_button = QPushButton("Select Clips Output Path")
-        select_clips_output_button.setStyleSheet(font_style)
-        select_clips_output_button.clicked.connect(self.select_clips_output_path)
-        layout.addWidget(select_clips_output_button, 4, 1)
+        self.select_clips_output_button = QPushButton("Select Clips Output Path")
+        self.select_clips_output_button.setStyleSheet(font_style)
+        self.select_clips_output_button.clicked.connect(self.select_clips_output_path)
+        layout.addWidget(self.select_clips_output_button, 4, 1)
 
         # Display the default path and selected path
         self.clips_output_label = QLabel(f"Default: {self.default_clips_output}\nCurrent: {self.current_clips_output}")
@@ -123,6 +177,15 @@ class MainWindow(QWidget):
         self.time_label = QLabel("Elapsed Time: 0s, Expected Time Left: N/A")
         self.time_label.setStyleSheet(font_style)
         layout.addWidget(self.time_label, 9, 0, 1, 2)
+
+        # Add language switch buttons
+        self.language_buttons = QMenu(self.tr("Switch Language"))
+        self.language_buttons.addAction(self.tr("English"), lambda: self.switch_language("en"))
+        self.language_buttons.addAction(self.tr("Chinese"), lambda: self.switch_language("zh"))
+        self.language_buttons.addAction(self.tr("Japanese"), lambda: self.switch_language("ja"))
+        self.language_button = QPushButton(self.tr("Switch Language"))
+        self.language_button.setMenu(self.language_buttons)
+        layout.addWidget(self.language_button, 10, 0, 1, 2)
 
         self.setLayout(layout)
         self.setWindowTitle('LiveReCBot')
@@ -263,9 +326,6 @@ class MainWindow(QWidget):
                 return
             self.tray_icon = QSystemTrayIcon(self)
             icon = QIcon(icon_path)
-            # if icon.isNull():
-            #     logger.error(f"Failed to load icon from {icon_path}")
-            #     return
             self.tray_icon.setIcon(icon)
             self.tray_icon.setToolTip('LiveReCBot')
             self.tray_icon.activated.connect(self.tray_icon_activated)

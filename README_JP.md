@@ -72,7 +72,7 @@
 * すべての必要条件をインストール
 * LiveRecBotをインストール
 ```
-    pyinstaller --onefile --windowed --dist LiveRecBot -i LRB.ico LiveRecBot.py
+    pyinstaller --onefile --windowed --add-data --dist LiveRecBot -i LRB.ico LiveRecBot.py
 ```
 * LiveRecBotディレクトリに移動し、__LiveRecBot.exe__ を実行
 * 実行すると、デフォルトのファイルディレクトリが実行可能ファイルと同じディレクトリに作成されます。
