@@ -18,4 +18,6 @@ OUTPUT_CLIPS_DIR = DEFAULT_OUTPUT_CLIPS_DIR
 os.makedirs(OUTPUT_VIDEO_DIR, exist_ok=True)
 os.makedirs(OUTPUT_IMAGE_DIR, exist_ok=True)
 os.makedirs(OUTPUT_CLIPS_DIR, exist_ok=True)
-    
+
+# Folder where BililiveRecorder saves videos
+BASE_PATH = os.path.abspath(".")

@@ -3,6 +3,7 @@ import sys
 import threading
 import time
 import json
+import global_vars
 from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton, QFileDialog, QLabel, QLineEdit, QMessageBox, QProgressBar, QSystemTrayIcon, QMenu, QApplication,QStackedWidget,QTextEdit
 from PyQt5.QtGui import QIcon
 from flask_app import app
@@ -15,7 +16,6 @@ CONFIG_FILE = "config.json"
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        import global_vars
         self.default_video_output = global_vars.OUTPUT_VIDEO_DIR
         self.default_image_output = global_vars.OUTPUT_IMAGE_DIR
         self.default_clips_output = global_vars.OUTPUT_CLIPS_DIR
@@ -33,6 +33,13 @@ class MainWindow(QWidget):
         self.setup_tray_icon()
 
         logger.info("Main window initialized.")
+
+    def select_base_path(self):
+        path = QFileDialog.getExistingDirectory(self, "Select Base Path")
+        if path:
+            self.base_path = path
+            global_vars.BASE_PATH = self.base_path
+            logger.info(f"Base Path Selected: {path}")
 
     def load_language_preference(self):
         if os.path.exists(CONFIG_FILE):
@@ -183,6 +190,12 @@ class MainWindow(QWidget):
         self.clips_output_label = QLabel(f"Default: {self.default_clips_output}\nCurrent: {self.current_clips_output}")
         self.clips_output_label.setStyleSheet(font_style)
         layout.addWidget(self.clips_output_label, 5, 1)
+
+        # Select base path for BililiveRecorder
+        self.base_path_button = QPushButton("Select Base Path")
+        self.base_path_button.setStyleSheet(font_style)
+        self.base_path_button.clicked.connect(self.select_base_path)
+        layout.addWidget(self.base_path_button, 6, 1)
 
         # Progress bar
         self.progress_bar = QProgressBar(self)

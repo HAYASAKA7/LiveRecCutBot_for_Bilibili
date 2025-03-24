@@ -56,11 +56,13 @@ def webhook():
         
         if EventType == 'FileClosed':
             if relative_path.endswith('.flv'):
-                video_file = relative_path
+                video_file = os.path.join(global_vars.BASE_PATH, relative_path)
                 danmaku_file = None
+                logging.info(f"Received FileClosed event for {relative_path}, starting processing.")
             elif relative_path.endswith('.xml'):
                 video_file = None
-                danmaku_file = relative_path
+                danmaku_file = os.path.join(global_vars.BASE_PATH, relative_path)
+                logging.info(f"Received FileClosed event for {relative_path}, starting processing.")
             else:
                 logging.error(f"Unsupported file type: {relative_path}")
                 return "Unsupported file type", 204
