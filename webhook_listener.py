@@ -9,6 +9,8 @@ app = Flask(__name__)
 
 processed_event_ids = set()
 
+selected_encoder = "h264_qsv"
+
 logging.basicConfig(filename='webhook_listener.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -88,7 +90,10 @@ def webhook():
                 output_clips_sub_dir = os.path.join(global_vars.OUTPUT_CLIPS_DIR, output_video_name)
                 os.makedirs(output_clips_sub_dir, exist_ok=True)
 
+                process_video(video_file, danmaku_file, output_video, image_path, output_clips_sub_dir, selected_encoder)
+
                 processed_event_ids.add(EventId)
+                logging.info(f"Webhook processing completed for {video_file}")
                 return "Clips processed", 200
             elif video_file:
                 webhook.video_file = video_file

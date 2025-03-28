@@ -13,7 +13,7 @@ logger = setup_logger()
 plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
 
-def plot_density_curve(bins, density, minute_bins, minute_density, save_path, video_duration, input_video=None, output_dir=None):
+def plot_density_curve(bins, density, minute_bins, minute_density, save_path, video_duration, input_video, output_dir, encoder="h264_qsv"):
     """
     Plot the danmaku density curve and save it as an image.
     Additionally, output a .pdf file listing the time segments of high-density regions.
@@ -117,11 +117,29 @@ def plot_density_curve(bins, density, minute_bins, minute_density, save_path, vi
                 # Generate the file name for the clipped video segment
                 output_file = os.path.join(output_dir, f"{output_video_name}_clip{i:03d}.mp4")
                 try:
+                    if encoder == "h264_qsv":
+                            video_codec = "h264_qsv"
+                            extra_args = ["-vf", "format=nv12"]
+                    elif encoder == "libx264":
+                            video_codec = "libx264"
+                            extra_args = []
+                    elif encoder == "h264_nvenc":
+                            video_codec = "h264_nvenc"
+                            extra_args = []
+                    else:
+                        video_codec = "libx264" 
+                        extra_args = []
+
                     subprocess.run([
                         'ffmpeg', '-y', '-i', input_video,
                         '-ss', str(clip_start * 60),
                         '-to', str(clip_end * 60),
-                        '-c', 'copy', output_file
+                        '-c:v', video_codec,  
+                        '-c:a', 'copy',       
+                        '-preset', 'fast',    
+                        '-b:v', '5M',        
+                        *extra_args,          
+                        output_file
                     ], check=True)
                     logger.info(f"Clipped video saved to {output_file}")
                 except subprocess.CalledProcessError as e:

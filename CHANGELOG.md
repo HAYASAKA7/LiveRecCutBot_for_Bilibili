@@ -34,3 +34,7 @@
 ### 1.0.7 (2025-3-28)
 - Replace txt file by pdf file to avoid misoperation.
 - Highlight the 5 highest danmaku density time points in the pdf file.
+
+### 1.0.8 (2025-3-28)
+- Add encoder support for Intel CPU/GPU, AMD CPU/GPU, NVIDIA GPU.
+- Add tab switch for different settings.

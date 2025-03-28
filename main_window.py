@@ -4,28 +4,51 @@ import threading
 import time
 import json
 import global_vars
-from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton, QFileDialog, QLabel, QLineEdit, QMessageBox, QProgressBar, QSystemTrayIcon, QMenu, QApplication,QStackedWidget,QTextEdit
+from PyQt5.QtWidgets import QWidget, QComboBox,QGridLayout, QPushButton, QFileDialog, QLabel, QLineEdit, QMessageBox, QProgressBar, QSystemTrayIcon, QMenu, QApplication,QVBoxLayout,QMainWindow,QTabWidget
 from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import Qt
 from flask_app import app
 from logger_config import setup_logger
+import webhook_listener
 
 logger = setup_logger()
 
 CONFIG_FILE = "config.json"
 
-class MainWindow(QWidget):
+class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle("LiveRecBot")
+        self.tabs = QTabWidget(self)
+        self.setGeometry(0, 0, 800, 600)
+
         self.default_video_output = global_vars.OUTPUT_VIDEO_DIR
         self.default_image_output = global_vars.OUTPUT_IMAGE_DIR
         self.default_clips_output = global_vars.OUTPUT_CLIPS_DIR
         self.current_video_output = self.default_video_output
         self.current_image_output = self.default_image_output
         self.current_clips_output = self.default_clips_output
+        
         self.translations = {}
         self.language = self.load_language_preference()
         self.load_translations(self.language)
+
+        self.tab1 = QWidget()
+        self.tab2 = QWidget()
+        self.tab3 = QWidget()
+
+        self.tabs.addTab(self.tab1, "Main Functions")
+        self.tabs.addTab(self.tab2, "File Paths")
+        self.tabs.addTab(self.tab3, "Settings")
+
+        self.init_tab1()
+        self.init_tab2()
+        self.init_tab3()
+
+        self.tabs.setGeometry(10, 10, 780, 580)
+
         self.initUI()
+
         self.flask_thread = None
         self.start_time = None
         self.total_size = 0
@@ -33,6 +56,16 @@ class MainWindow(QWidget):
         self.setup_tray_icon()
 
         logger.info("Main window initialized.")
+
+    def save_encoder_settings(self):
+        selected_option = self.encoder_combo_box.currentText()
+        if "Intel" in selected_option:
+            self.selected_encoder = "h264_qsv"
+        elif "AMD" in selected_option:
+            self.selected_encoder = "libx264"
+        elif "NVIDIA" in selected_option:
+            self.selected_encoder = "h264_nvenc"
+        logger.info(f"Encode mode has been set to {self.selected_encoder}")
 
     def select_base_path(self):
         path = QFileDialog.getExistingDirectory(self, "Select Base Path")
@@ -113,23 +146,25 @@ class MainWindow(QWidget):
             self.setWindowIcon(QIcon(icon_path))
             logger.info("Window icon set.")
 
+        logger.info("UI initialized.")
+
+    def init_tab1(self):
         layout = QGridLayout()
 
-        # Set font and font size style
         font_style = "font-family: Arial; font-size: 14px;"
 
         self.video_label = QLabel("No video file selected")
         self.video_label.setStyleSheet(font_style)
         layout.addWidget(self.video_label, 0, 0)
 
-        self.danmaku_label = QLabel("No danmaku file selected")
-        self.danmaku_label.setStyleSheet(font_style)
-        layout.addWidget(self.danmaku_label, 1, 0)
-
         self.video_button = QPushButton("Select Video File")
         self.video_button.setStyleSheet(font_style)
         self.video_button.clicked.connect(self.select_video)
-        layout.addWidget(self.video_button, 2, 0)
+        layout.addWidget(self.video_button, 1, 0)
+
+        self.danmaku_label = QLabel("No danmaku file selected")
+        self.danmaku_label.setStyleSheet(font_style)
+        layout.addWidget(self.danmaku_label, 2, 0)
 
         self.danmaku_button = QPushButton("Select Danmaku File")
         self.danmaku_button.setStyleSheet(font_style)
@@ -141,13 +176,11 @@ class MainWindow(QWidget):
         self.process_button.clicked.connect(self.process_video)
         layout.addWidget(self.process_button, 4, 0)
 
-        # Add a button to process only danmaku file
         self.process_danmaku_button = QPushButton("Process Danmaku Only")
         self.process_danmaku_button.setStyleSheet(font_style)
         self.process_danmaku_button.clicked.connect(self.process_danmaku_only)
         layout.addWidget(self.process_danmaku_button, 5, 0)
 
-        # Add an input box for the Webhook interface
         self.webhook_input = QLineEdit()
         self.webhook_input.setStyleSheet(font_style)
         self.webhook_input.setPlaceholderText("Enter the Webhook interface address")
@@ -158,55 +191,65 @@ class MainWindow(QWidget):
         self.start_listening_button.clicked.connect(self.start_listening)
         layout.addWidget(self.start_listening_button, 7, 0)
 
-        # Add buttons to select output paths in the second column
+        self.tab1.setLayout(layout)
+
+    def init_tab2(self):
+        layout = QGridLayout()
+
+        font_style = "font-family: Arial; font-size: 14px;"
+
         self.select_video_output_button = QPushButton("Select Video Output Path")
         self.select_video_output_button.setStyleSheet(font_style)
         self.select_video_output_button.clicked.connect(self.select_video_output_path)
-        layout.addWidget(self.select_video_output_button, 0, 1)
+        layout.addWidget(self.select_video_output_button, 0, 0)
 
-        # Display the default path and selected path
         self.video_output_label = QLabel(f"Default: {self.default_video_output}\nCurrent: {self.current_video_output}")
         self.video_output_label.setStyleSheet(font_style)
-        layout.addWidget(self.video_output_label, 1, 1)
+        layout.addWidget(self.video_output_label, 1, 0)
 
-        # Add buttons to select output paths in the second column
         self.select_image_output_button = QPushButton("Select Image Output Path")
         self.select_image_output_button.setStyleSheet(font_style)
         self.select_image_output_button.clicked.connect(self.select_image_output_path)
-        layout.addWidget(self.select_image_output_button, 2, 1)
+        layout.addWidget(self.select_image_output_button, 2, 0)
 
-        # Display the default path and selected path
         self.image_output_label = QLabel(f"Default: {self.default_image_output}\nCurrent: {self.current_image_output}")
         self.image_output_label.setStyleSheet(font_style)
-        layout.addWidget(self.image_output_label, 3, 1)
+        layout.addWidget(self.image_output_label, 3, 0)
 
-        # Add buttons to select output paths in the second column
         self.select_clips_output_button = QPushButton("Select Clips Output Path")
         self.select_clips_output_button.setStyleSheet(font_style)
         self.select_clips_output_button.clicked.connect(self.select_clips_output_path)
-        layout.addWidget(self.select_clips_output_button, 4, 1)
+        layout.addWidget(self.select_clips_output_button, 4, 0)
 
-        # Display the default path and selected path
         self.clips_output_label = QLabel(f"Default: {self.default_clips_output}\nCurrent: {self.current_clips_output}")
         self.clips_output_label.setStyleSheet(font_style)
-        layout.addWidget(self.clips_output_label, 5, 1)
+        layout.addWidget(self.clips_output_label, 5, 0)
 
-        # Select base path for BililiveRecorder
         self.base_path_button = QPushButton("Select Base Path")
         self.base_path_button.setStyleSheet(font_style)
         self.base_path_button.clicked.connect(self.select_base_path)
-        layout.addWidget(self.base_path_button, 6, 1)
+        layout.addWidget(self.base_path_button, 6, 0)
 
-        # Progress bar
-        self.progress_bar = QProgressBar(self)
-        self.progress_bar.setStyleSheet("QProgressBar::chunk { background-color: green; }")
-        self.progress_bar.setRange(0, 100)
-        layout.addWidget(self.progress_bar, 8, 0, 1, 2)
+        self.tab2.setLayout(layout)
 
-        # Time display label
-        self.time_label = QLabel("Elapsed Time: 0s, Expected Time Left: N/A")
-        self.time_label.setStyleSheet(font_style)
-        layout.addWidget(self.time_label, 9, 0, 1, 2)
+    def init_tab3(self):
+        layout = QVBoxLayout()
+
+        font_style = "font-family: Arial; font-size: 14px;"
+
+        self.encoder_label = QLabel("Select encode mode:")
+        self.encoder_label.setStyleSheet(font_style)
+        layout.addWidget(self.encoder_label)
+
+        self.encoder_combo_box = QComboBox()
+        self.encoder_combo_box.addItems(["Intel (h264_qsv)", "AMD (libx264)", "NVIDIA (h264_nvenc)"])
+        self.encoder_combo_box.setStyleSheet(font_style)
+        layout.addWidget(self.encoder_combo_box)
+
+        self.save_button = QPushButton("Save Settings")
+        self.save_button.setStyleSheet(font_style)
+        self.save_button.clicked.connect(self.save_encoder_settings)
+        layout.addWidget(self.save_button)
 
         # Add language switch buttons
         self.language_buttons = QMenu(self.tr("Switch Language"))
@@ -215,13 +258,9 @@ class MainWindow(QWidget):
         self.language_buttons.addAction(self.tr("Japanese"), lambda: self.switch_language("ja"))
         self.language_button = QPushButton(self.tr("Switch Language"))
         self.language_button.setMenu(self.language_buttons)
-        layout.addWidget(self.language_button, 10, 0, 1, 2)
-
-        self.setLayout(layout)
-        self.setWindowTitle('LiveReCBot')
-        self.setGeometry(300, 300, 600, 400)  # Increase the window height appropriately to accommodate the progress bar and time display
-        self.show()
-        logger.info("UI initialized.")
+        layout.addWidget(self.language_button, alignment=Qt.AlignCenter)
+        
+        self.tab3.setLayout(layout)
 
     def select_video(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Select Video File", "", "Video files (*.mp4)")
@@ -345,6 +384,24 @@ class MainWindow(QWidget):
             self.flask_thread = threading.Thread(target=app.run, kwargs={'host': '0.0.0.0', 'port': 5000})
             self.flask_thread.start()
             logger.info(f"Started listening on Webhook interface: {webhook_url}")
+        try:
+            selected_option = self.encoder_combo_box.currentText()
+            if "Intel" in selected_option:
+                selected_encoder = "h264_qsv"
+            elif "AMD" in selected_option:
+                selected_encoder = "libx264"
+            elif "NVIDIA" in selected_option:
+                selected_encoder = "h264_nvenc"
+            else:
+                selected_encoder = "h264_qsv" 
+
+            webhook_listener.selected_encoder = selected_encoder
+            logger.info(f"Webhook listener started with encoder: {selected_encoder}")
+
+            threading.Thread(target=app.run, kwargs={"host": "0.0.0.0", "port": 5000}).start()
+            logger.info("Webhook listener started.")
+        except Exception as e:
+            logger.error(f"Error starting webhook listener: {e}")
 
     def setup_tray_icon(self):
         try:
