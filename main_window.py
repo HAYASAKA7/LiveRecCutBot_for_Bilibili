@@ -271,7 +271,6 @@ class MainWindow(QWidget):
 
             self.progress_bar.setValue(i + 1)
             self.time_label.setText(f"Elapsed Time: {elapsed_time:.2f}s, Expected Time Left: {expected_time:.2f}s")
-            logger.debug(f"Video processing progress: {i + 1}%")
 
         plot_density_curve(bins, density, minute_bins, minute_density, image_path, video_duration, output_video,
                            output_clips_dir)
