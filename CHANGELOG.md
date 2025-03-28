@@ -26,3 +26,7 @@
 - Add multi-language support.(English, Japanese, Chinese)
 - Multi-language still in progress. Now need to mannually drag 'translations' folder to the same directory as the executable.
 - Allow user to change default language by clicking Switching Language button.
+
+### 1.0.6 (2025-3-28)
+- Add txt output to 'curve_plotter.py'.
+- This helps to cut videos manually. No need to see the curve, but only by checking the time in the txt file.
