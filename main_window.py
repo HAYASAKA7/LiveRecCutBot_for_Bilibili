@@ -309,7 +309,6 @@ class MainWindow(QWidget):
 
             self.progress_bar.setValue(i + 1)
             self.time_label.setText(f"Elapsed Time: {elapsed_time:.2f}s, Expected Time left: {expected_time:.2f}s")
-            logger.debug(f"Danmaku processing progress: {i + 1}%")
 
         plot_density_curve(bins, density, minute_bins, minute_density, image_path, video_duration, None, None)
         logger.info("Danmaku processing completed.")
