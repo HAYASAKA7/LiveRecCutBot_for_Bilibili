@@ -3,6 +3,8 @@ import numpy as np
 import os
 import subprocess
 from logger_config import setup_logger
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 
 logger = setup_logger()
 
@@ -10,11 +12,10 @@ logger = setup_logger()
 plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
 
-
 def plot_density_curve(bins, density, minute_bins, minute_density, save_path, video_duration, input_video=None, output_dir=None):
     """
     Plot the danmaku density curve and save it as an image.
-    Additionally, output a .txt file listing the time segments of high-density regions.
+    Additionally, output a .pdf file listing the time segments of high-density regions.
     :param bins: Bin edges for the density calculation.
     :param density: Density values.
     :param minute_bins: Bin edges for the minute density calculation.
@@ -59,25 +60,37 @@ def plot_density_curve(bins, density, minute_bins, minute_density, save_path, vi
         segments = []
         start_index = None
 
-        txt_output_path = save_path.replace('.png', '_segments.txt')
-        with open(txt_output_path, 'w') as txt_file:
-            txt_file.write(f"High-density segments (Minutes):\n")
-            txt_file.write("=" * 40 + "\n")
+        pdf_output_path = save_path.replace('.png', '_segments.pdf')
+        pdf = canvas.Canvas(pdf_output_path, pagesize=letter)
+        pdf.setFont("Helvetica", 12)
+        pdf.drawString(50, 750, "High-Density Time Segments (Minutes):")
+        pdf.drawString(50, 735, "=" * 40)
 
-            for i in range(len(high_density_indices)):
-                if start_index is None:
-                    start_index = high_density_indices[i]
-                if i == len(high_density_indices) - 1 or high_density_indices[i + 1] != high_density_indices[i] + 1:
-                    end_index = high_density_indices[i]
-                    start_time = minute_bins[start_index]
-                    end_time = minute_bins[end_index] + 1
-                    segments.append((start_time, end_time))
-                    plt.axvspan(start_time, end_time, color='y', alpha=0.3)
-                    plt.axvline(x=start_time, color='m', linestyle='--', linewidth=1)
-                    plt.axvline(x=end_time, color='m', linestyle='--', linewidth=1)
-                    txt_file.write(f"{int(start_time // 60):02d}:{int(start_time % 60):02d} - "
-                                   f"{int(end_time // 60):02d}:{int(end_time % 60):02d}\n")
-                    start_index = None
+        y_position = 720
+
+        for i in range(len(high_density_indices)):
+            if start_index is None:
+                 start_index = high_density_indices[i]
+            if i == len(high_density_indices) - 1 or high_density_indices[i + 1] != high_density_indices[i] + 1:
+                end_index = high_density_indices[i]
+                start_time = minute_bins[start_index]
+                end_time = minute_bins[end_index] + 1
+                segments.append((start_time, end_time))
+                plt.axvspan(start_time, end_time, color='y', alpha=0.3)
+                plt.axvline(x=start_time, color='m', linestyle='--', linewidth=1)
+                plt.axvline(x=end_time, color='m', linestyle='--', linewidth=1)
+                
+                segment_text = f"{int(start_time // 60):02d}:{int(start_time % 60):02d} - {int(end_time // 60):02d}:{int(end_time % 60):02d}"
+                pdf.drawString(50, y_position, segment_text)
+                y_position -= 15  # Move to the next line
+
+                if y_position < 50:
+                    pdf.showPage()
+                    pdf.setFont("Helvetica", 12)
+                    y_position = 750
+                
+                start_index = None
+        pdf.save()
 
         if input_video and output_dir:
             os.makedirs(output_dir, exist_ok=True)

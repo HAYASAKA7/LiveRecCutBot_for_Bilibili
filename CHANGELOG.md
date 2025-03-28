@@ -30,3 +30,6 @@
 ### 1.0.6 (2025-3-28)
 - Add txt output to 'curve_plotter.py'.
 - This helps to cut videos manually. No need to see the curve, but only by checking the time in the txt file.
+
+### 1.0.7 (2025-3-28)
+- Replace txt file by pdf file to avoid misoperation.
