@@ -5,6 +5,7 @@ import subprocess
 from logger_config import setup_logger
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from reportlab.lib.colors import Color
 
 logger = setup_logger()
 
@@ -81,6 +82,7 @@ def plot_density_curve(bins, density, minute_bins, minute_density, save_path, vi
                 plt.axvline(x=end_time, color='m', linestyle='--', linewidth=1)
                 
                 segment_text = f"{int(start_time // 60):02d}:{int(start_time % 60):02d} - {int(end_time // 60):02d}:{int(end_time % 60):02d}"
+                pdf.setFillColor(Color(0, 0, 0))  # Black for segment text
                 pdf.drawString(50, y_position, segment_text)
                 y_position -= 15  # Move to the next line
 
@@ -90,7 +92,20 @@ def plot_density_curve(bins, density, minute_bins, minute_density, save_path, vi
                     y_position = 750
                 
                 start_index = None
+        # Identify the top 5 highest-density time points
+        top_5_indices = np.argsort(minute_density)[-5:][::-1]
+        top_5_times = [minute_bins[i] for i in top_5_indices]
+
+        # Write the top 5 highest-density time points in red
+        pdf.setFillColor(Color(1, 0, 0))  # Red for top 5 time points
+        pdf.drawString(50, y_position, "Top 5 Highest-Density Time Points:")
+        y_position -= 15
+        for time_point in top_5_times:
+            time_text = f"{int(time_point // 60):02d}:{int(time_point % 60):02d}"
+            pdf.drawString(50, y_position, time_text)
+            y_position -= 15
         pdf.save()
+        logger.info(f"High-density time segments saved to {pdf_output_path}")
 
         if input_video and output_dir:
             os.makedirs(output_dir, exist_ok=True)

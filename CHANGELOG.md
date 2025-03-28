@@ -33,3 +33,4 @@
 
 ### 1.0.7 (2025-3-28)
 - Replace txt file by pdf file to avoid misoperation.
+- Highlight the 5 highest danmaku density time points in the pdf file.
