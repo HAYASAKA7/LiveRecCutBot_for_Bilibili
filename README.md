@@ -97,6 +97,7 @@ If you directly download the executable file from Release, you can run it withou
 #### Auto suppress and generate hot clips
 * Click __Select Video Output Path__ and __Select Image Output Path__ to set the out put file path.
 * Set webhook interface inside Danmuji: https://host:port//webhook (__The default port is 5000__)
+* Click __Select Base Path__ to set the base path for the webhook listener.(This means where your Bililive Recorder output the recorded files)
 * Enter the webhook interface address in the Webhook text box.
 * Click __Start Listening__. You can close the window now and the program will continue to run in the background.
 

@@ -95,6 +95,7 @@
 #### 自動圧縮とホットクリップの生成
 * __Select Video Output Path__ と __Select Image Output Path__ をクリックして、出力ファイルのパスを設定します。
 * Danmuji内でWebhookインターフェースを設定: https://host:port//webhook (__デフォルトのポートは5000__)
+* __Select Base Path__ をクリックして、Danmujiの自動録画保存先を選択します。
 * WebhookテキストボックスにWebhookインターフェースアドレスを入力します。
 * __Start Listening__ をクリックします。ウィンドウを閉じてもプログラムはバックグラウンドで実行され続けます。
 

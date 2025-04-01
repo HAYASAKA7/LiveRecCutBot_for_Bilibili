@@ -1,7 +1,7 @@
 from flask import Flask, request
 import os
 import global_vars
-import logging
+from logger_config import setup_logger
 from video_processor import process_video
 from datetime import datetime
 
@@ -11,8 +11,10 @@ processed_event_ids = set()
 
 selected_encoder = "h264_qsv"
 
-logging.basicConfig(filename='webhook_listener.log', level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+logging = setup_logger()
+
+# logging.basicConfig(filename='webhook_listener.log', level=logging.INFO,
+#                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Create output directory
 os.makedirs(global_vars.OUTPUT_VIDEO_DIR, exist_ok=True)

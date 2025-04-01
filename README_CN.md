@@ -94,6 +94,7 @@
 ### 自动压制弹幕及切片
 * 点击 __Select Video Output Path__ 和 __Select Image Output Path__ 设置输出文件路径。
 * 在录播姬内设置Webhook接口：https://host:port//webhook （__默认port为5000__）
+* 点击 __Select Base Path__ 选择录播姬自动录播存储地址。
 * 在本工具文本框输入录播姬相同的Webhook地址。
 * 点击 __Start Listening__ 开始监听录播姬的Webhook。点击关闭窗口，应用将在后台运行。
 

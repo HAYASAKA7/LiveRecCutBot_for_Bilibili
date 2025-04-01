@@ -1,12 +1,14 @@
 import subprocess
 import os
-import logging
+from logger_config import setup_logger
 from xml_parser import parse_xml
 from density_calculator import calculate_density, calculate_minute_density
 from curve_plotter import plot_density_curve
 
-logging.basicConfig(filename='video_processing.log', level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+# logging.basicConfig(filename='video_processing.log', level=logging.INFO,
+#                     format='%(asctime)s - %(levelname)s - %(message)s')
+
+logging = setup_logger()
 
 def process_video(video_file, danmaku_file, output_video, image_path, output_clips_dir, encoder):
     try:

@@ -4,11 +4,15 @@ import threading
 import time
 import json
 import global_vars
-from PyQt5.QtWidgets import QWidget, QComboBox,QGridLayout, QPushButton, QFileDialog, QLabel, QLineEdit, QMessageBox, QProgressBar, QSystemTrayIcon, QMenu, QApplication,QVBoxLayout,QMainWindow,QTabWidget
+from PyQt5.QtWidgets import QWidget, QComboBox,QGridLayout, QPushButton, QFileDialog, QLabel, QLineEdit, QMessageBox, QSystemTrayIcon, QMenu, QApplication, QVBoxLayout, QMainWindow, QTabWidget, QProgressBar
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, Q_ARG,QEvent, QMetaObject
 from flask_app import app
 from logger_config import setup_logger
+from xml_parser import parse_xml
+from density_calculator import calculate_density, calculate_minute_density
+from curve_plotter import plot_density_curve
+import global_vars
 import webhook_listener
 
 logger = setup_logger()
@@ -110,7 +114,7 @@ class MainWindow(QMainWindow):
             self.update_ui_texts()
         except Exception as e:
             logger.error(f"Error switching language: {e}")
-            QMessageBox.critical(self, "Error", f"Failed to switch language: {e}")
+            QMessageBox.critical(self, "Error", self.tr(f"Failed to switch language: {e}"))
 
     def update_ui_texts(self):
         try:
@@ -128,7 +132,13 @@ class MainWindow(QMainWindow):
             self.image_output_label.setText(f"{self.tr('Default')}: {self.default_image_output}\n{self.tr('Current')}: {self.current_image_output}")
             self.clips_output_label.setText(f"{self.tr('Default')}: {self.default_clips_output}\n{self.tr('Current')}: {self.current_clips_output}")
             self.select_clips_output_button.setText(self.tr("Select Clips Output Path"))
-            self.time_label.setText(self.tr("Elapsed Time: 0s, Expected Time Left: N/A"))
+            self.elapsed_time_label.setText(self.tr("Elapsed Time: 0.00s"))
+            self.remaining_time_label.setText(self.tr("Expected Time Left: 0.00s"))
+            self.encoder_label.setText(self.tr("Select encode mode:"))
+            self.save_button.setText(self.tr("Save Settings"))
+            self.tabs.setTabText(0, self.tr("Main Functions"))
+            self.tabs.setTabText(1, self.tr("File Paths"))
+            self.tabs.setTabText(2, self.tr("Settings"))
             self.language_button.setText(self.tr("Switch Language"))
             self.language_buttons.clear()
             self.language_buttons.addAction(self.tr("English"), lambda: self.switch_language("en"))
@@ -136,7 +146,7 @@ class MainWindow(QMainWindow):
             self.language_buttons.addAction(self.tr("Japanese"), lambda: self.switch_language("ja"))
         except Exception as e:
             logger.error(f"Error updating UI texts: {e}")
-            QMessageBox.critical(self, "Error", f"Failed to update UI texts: {e}")
+            QMessageBox.critical(self, "Error", self.tr(f"Failed to update UI texts: {e}"))
 
     def initUI(self):
         icon_path = 'D:/Projects/Python/RecBot+AutoCut/LRB.png'
@@ -180,7 +190,7 @@ class MainWindow(QMainWindow):
         self.process_danmaku_button.setStyleSheet(font_style)
         self.process_danmaku_button.clicked.connect(self.process_danmaku_only)
         layout.addWidget(self.process_danmaku_button, 5, 0)
-
+        
         self.webhook_input = QLineEdit()
         self.webhook_input.setStyleSheet(font_style)
         self.webhook_input.setPlaceholderText("Enter the Webhook interface address")
@@ -190,6 +200,20 @@ class MainWindow(QMainWindow):
         self.start_listening_button.setStyleSheet(font_style)
         self.start_listening_button.clicked.connect(self.start_listening)
         layout.addWidget(self.start_listening_button, 7, 0)
+
+        self.elapsed_time_label = QLabel("Elapsed Time: 0.00s")
+        self.elapsed_time_label.setStyleSheet(font_style)
+        layout.addWidget(self.elapsed_time_label, 8, 0)
+
+        self.remaining_time_label = QLabel("Expected Time Left: 0.00s")
+        self.remaining_time_label.setStyleSheet(font_style)
+        layout.addWidget(self.remaining_time_label, 9, 0)
+
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setStyleSheet(font_style)
+        self.progress_bar.setValue(0)  # Initialize progress bar to 0%
+        self.progress_bar.setMaximum(100)  # Set maximum value to 100
+        layout.addWidget(self.progress_bar, 10, 0)
 
         self.tab1.setLayout(layout)
 
@@ -277,79 +301,110 @@ class MainWindow(QMainWindow):
             logger.info(f"Danmaku file selected: {file_path}")
 
     def process_video(self):
-        if hasattr(self, 'video_path') and hasattr(self, 'danmaku_path'):
-            self.total_size = os.path.getsize(self.video_path) + os.path.getsize(self.danmaku_path)
-            self.processed_size = 0
-            self.start_time = time.time()
-            threading.Thread(target=self._process_video_thread).start()
-            logger.info("Video processing started.")
+        try:
+            logger.info("Processing video...")
+            if hasattr(self, 'video_path') and hasattr(self, 'danmaku_path'):
+                self.total_size = os.path.getsize(self.video_path) + os.path.getsize(self.danmaku_path)
+                self.processed_size = 0
+                self.start_time = time.time()
+                threading.Thread(target=self._process_video_thread).start()
+                logger.info("Video processing started.")
+            else:
+                logger.warning("Video or danmaku file not selected.")
+                QMessageBox.warning(self, "Input Error", self.tr("Please select both video and danmaku files"))
+        except Exception as e:
+            logger.error(f"Error processing video: {e}")
+            QMessageBox.critical(self, "Error", self.tr(f"Failed to process video: {e}"))
 
     def _process_video_thread(self):
-        from xml_parser import parse_xml
-        from density_calculator import calculate_density, calculate_minute_density
-        from curve_plotter import plot_density_curve
-        import global_vars
-        timestamps, video_duration = parse_xml(self.danmaku_path)
-        bins, density = calculate_density(timestamps)
-        minute_bins, minute_density = calculate_minute_density(timestamps, video_duration)
-        output_video_name = os.path.basename(self.video_path).replace('.mp4', '')
-        image_path = os.path.join(global_vars.OUTPUT_IMAGE_DIR, f"{output_video_name}_danmaku_density.png")
-        output_clips_dir = os.path.join(global_vars.OUTPUT_CLIPS_DIR, f"{output_video_name}_clips")
-        output_video = os.path.join(global_vars.OUTPUT_VIDEO_DIR, f"{output_video_name}.mp4")
+        try:
+            logger.info("Video processing thread started.")
+            timestamps, video_duration = parse_xml(self.danmaku_path)
+            bins, density = calculate_density(timestamps)
+            minute_bins, minute_density = calculate_minute_density(timestamps, video_duration)
+            output_video_name = os.path.basename(self.video_path).replace('.mp4', '')
+            image_path = os.path.join(global_vars.OUTPUT_IMAGE_DIR, f"{output_video_name}_danmaku_density.png")
+            output_clips_dir = os.path.join(global_vars.OUTPUT_CLIPS_DIR, f"{output_video_name}_clips")
+            output_video = os.path.join(global_vars.OUTPUT_VIDEO_DIR, f"{output_video_name}.mp4")
 
-        steps = 100  # Assume divided into 100 steps
-        step_size = self.total_size / steps
-        for i in range(steps):
-            # Simulate the processing progress
-            time.sleep(0.1)  # Simulate the processing time
-            self.processed_size += step_size
-            elapsed_time = time.time() - self.start_time
-            speed = self.processed_size / elapsed_time if elapsed_time > 0 else 0
-            remaining_size = self.total_size - self.processed_size
-            expected_time = remaining_size / speed if speed > 0 else 0
+            steps = 100  # Assume divided into 100 steps
+            step_size = self.total_size / steps
+            for i in range(steps):
+                time.sleep(0.1)  # Simulate the processing time
+                self.processed_size += step_size
+                elapsed_time = time.time() - self.start_time
+                speed = self.processed_size / elapsed_time if elapsed_time > 0 else 0
+                remaining_size = self.total_size - self.processed_size
+                expected_time = remaining_size / speed if speed > 0 else 0
 
-            self.progress_bar.setValue(i + 1)
-            self.time_label.setText(f"Elapsed Time: {elapsed_time:.2f}s, Expected Time Left: {expected_time:.2f}s")
+                QMetaObject.invokeMethod(self.progress_bar, "setValue", Qt.ConnectionType(Qt.QueuedConnection), Q_ARG(int, i + 1))
+                QMetaObject.invokeMethod(self.elapsed_time_label, "setText", Qt.ConnectionType(Qt.QueuedConnection),
+                             Q_ARG(str, f"Elapsed Time: {elapsed_time:.2f}s"))
+                QMetaObject.invokeMethod(self.remaining_time_label, "setText", Qt.ConnectionType(Qt.QueuedConnection),
+                             Q_ARG(str, f"Expected Time Left: {expected_time:.2f}s"))
 
-        plot_density_curve(bins, density, minute_bins, minute_density, image_path, video_duration, output_video,
-                           output_clips_dir)
-        logger.info("Video processing completed.")
+                # self.progress_bar.setValue(i + 1)
+                # self.elapsed_time_label.setText(f"Elapsed Time: {elapsed_time:.2f}s")
+                # self.remaining_time_label.setText(f"Expected Time Left: {expected_time:.2f}s")
+
+            plot_density_curve(bins, density, minute_bins, minute_density, image_path, video_duration, output_video,
+                            output_clips_dir)
+            logger.info("Video processing completed.")
+        except Exception as e:
+            logger.error(f"Error processing video: {e}")
+            QMessageBox.critical(self, "Error", self.tr(f"Failed to process video: {e}"))
 
     def process_danmaku_only(self):
-        if hasattr(self, 'danmaku_path'):
-            self.total_size = os.path.getsize(self.danmaku_path)
-            self.processed_size = 0
-            self.start_time = time.time()
-            threading.Thread(target=self._process_danmaku_only_thread).start()
-            logger.info("Danmaku processing started.")
+        try:
+            logger.info("Processing danmaku only...")
+            if hasattr(self, 'danmaku_path'):
+                self.total_size = os.path.getsize(self.danmaku_path)
+                self.processed_size = 0
+                self.start_time = time.time()
+                threading.Thread(target=self._process_danmaku_only_thread).start()
+                logger.info("Danmaku processing started.")
+            else:
+                logger.warning("Danmaku file not selected.")
+                QMessageBox.warning(self, "Input Error", self.tr("Please select a danmaku file"))
+        except Exception as e:
+            logger.error(f"Error processing danmaku: {e}")
+            QMessageBox.critical(self, "Error", self.tr(f"Failed to process danmaku: {e}"))
 
     def _process_danmaku_only_thread(self):
-        from xml_parser import parse_xml
-        from density_calculator import calculate_density, calculate_minute_density
-        from curve_plotter import plot_density_curve
-        import global_vars
-        timestamps, video_duration = parse_xml(self.danmaku_path)
-        bins, density = calculate_density(timestamps)
-        minute_bins, minute_density = calculate_minute_density(timestamps, video_duration)
-        output_danmaku_name = os.path.basename(self.danmaku_path).replace('.xml', '')
-        image_path = os.path.join(global_vars.OUTPUT_IMAGE_DIR, f"{output_danmaku_name}_danmaku_density.png")
+        try:
+            logger.info("Danmaku processing thread started")
+            timestamps, video_duration = parse_xml(self.danmaku_path)
+            bins, density = calculate_density(timestamps)
+            minute_bins, minute_density = calculate_minute_density(timestamps, video_duration)
+            output_danmaku_name = os.path.basename(self.danmaku_path).replace('.xml', '')
+            image_path = os.path.join(global_vars.OUTPUT_IMAGE_DIR, f"{output_danmaku_name}_danmaku_density.png")
 
-        steps = 100  # Assume divided into 100 steps
-        step_size = self.total_size / steps
-        for i in range(steps):
-            # Simulate the processing progress
-            time.sleep(0.1)  # Simulate the processing time
-            self.processed_size += step_size
-            elapsed_time = time.time() - self.start_time
-            speed = self.processed_size / elapsed_time if elapsed_time > 0 else 0
-            remaining_size = self.total_size - self.processed_size
-            expected_time = remaining_size / speed if speed > 0 else 0
+            steps = 100  # Assume divided into 100 steps
+            step_size = self.total_size / steps
+            for i in range(steps):
+                # Simulate the processing progress
+                time.sleep(0.1)  # Simulate the processing time
+                self.processed_size += step_size
+                elapsed_time = time.time() - self.start_time
+                speed = self.processed_size / elapsed_time if elapsed_time > 0 else 0
+                remaining_size = self.total_size - self.processed_size
+                expected_time = remaining_size / speed if speed > 0 else 0
 
-            self.progress_bar.setValue(i + 1)
-            self.time_label.setText(f"Elapsed Time: {elapsed_time:.2f}s, Expected Time left: {expected_time:.2f}s")
+                QMetaObject.invokeMethod(self.progress_bar, "setValue", Qt.ConnectionType(Qt.QueuedConnection), Q_ARG(int, i + 1))
+                QMetaObject.invokeMethod(self.elapsed_time_label, "setText", Qt.ConnectionType(Qt.QueuedConnection),
+                             Q_ARG(str, f"Elapsed Time: {elapsed_time:.2f}s"))
+                QMetaObject.invokeMethod(self.remaining_time_label, "setText", Qt.ConnectionType(Qt.QueuedConnection),
+                             Q_ARG(str, f"Expected Time Left: {expected_time:.2f}s"))
+                # self.progress_bar.setValue(i + 1)
+                # self.elapsed_time_label.setText(f"Elapsed Time: {elapsed_time:.2f}s")
+                # self.remaining_time_label.setText(f"Expected Time Left: {expected_time:.2f}s")
 
-        plot_density_curve(bins, density, minute_bins, minute_density, image_path, video_duration, None, None)
-        logger.info("Danmaku processing completed.")
+            plot_density_curve(bins, density, minute_bins, minute_density, image_path, video_duration, None, None)
+            logger.info("Danmaku processing completed.")
+            QMetaObject.invokeMethod(self.progress_bar, "set_value", Qt.ConnectionType(Qt.QueuedConnection), Q_ARG(int, 100))
+        except Exception as e:
+            logger.error(f"Error processing danmaku: {e}")
+            QMessageBox.critical(self, "Error", self.tr(f"Failed to process danmaku: {e}"))
 
     def select_video_output_path(self):
         path = QFileDialog.getExistingDirectory(self, "Select Video Output Path")
@@ -375,7 +430,7 @@ class MainWindow(QMainWindow):
     def start_listening(self):
         webhook_url = self.webhook_input.text()
         if not webhook_url:
-            QMessageBox.warning(self, "Input Error", "Please enter the Webhook interface address")
+            QMessageBox.warning(self, "Input Error", self.tr("Please enter the Webhook interface address"))
             logger.warning("Webhook interface address not provided.")
             return
 
@@ -416,6 +471,8 @@ class MainWindow(QMainWindow):
             self.tray_icon.activated.connect(self.tray_icon_activated)
 
             menu = QMenu(self)
+            restore_action = menu.addAction("Restore")
+            restore_action.triggered.connect(self.restore_window)
             exit_action = menu.addAction("Exit")
             exit_action.triggered.connect(self.close_app)
 
@@ -435,15 +492,40 @@ class MainWindow(QMainWindow):
                 logger.info("Window hidden to system tray.")
 
     def closeEvent(self, event):
-        print("Close event triggered")
-        event.ignore()
-        self.hide()
-        if self.tray_icon.isVisible():
-            print("Tray icon is visible")
-            logger.info("Window closed, minimized to system tray.")
+        message_box = QMessageBox(self)
+        message_box.setWindowTitle(self.tr("Exit Application"))
+        message_box.setText(self.tr("Are you sure you want to exit?"))
+        message_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        
+        yes_button = message_box.button(QMessageBox.Yes)
+        yes_button.setText(self.tr("Yes"))
+        no_button = message_box.button(QMessageBox.No)
+        no_button.setText(self.tr("No"))
+        
+        reply = message_box.exec_()
+        if reply == QMessageBox.Yes:
+            logger.info("Application exited by user.")
+            logger.info("")
+            event.accept()
         else:
-            print("Tray icon is not visible")
-            logger.warning("System tray icon not visible on window close.")
+            event.ignore()
+
+    def changeEvent(self, event):
+        if event.type() == QEvent.WindowStateChange and self.isMinimized():
+            self.hide()
+            self.tray_icon.showMessage(
+                "LiveRecBot",
+                self.tr("The application is minimized to the system tray"),
+                QSystemTrayIcon.Information,
+                3000
+            )
+            logger.info("Window minimized to system tray.")
+        super().changeEvent(event)
+
+    def restore_window(self):
+        self.showNormal()
+        self.activateWindow()
+        logger.info("Window restored from system tray.")
 
     def close_app(self):
         QApplication.quit()

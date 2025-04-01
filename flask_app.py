@@ -1,5 +1,5 @@
 import os
-import logging
+from logger_config import setup_logger
 from flask import Flask, request
 from xml_parser import parse_xml
 from density_calculator import calculate_density, calculate_minute_density
@@ -7,15 +7,17 @@ from curve_plotter import plot_density_curve
 import global_vars
 from datetime import datetime
 
+logging = setup_logger
+
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler("app.log"),
-        logging.StreamHandler()
-    ]
-)
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format='%(asctime)s - %(levelname)s - %(message)s',
+#     handlers=[
+#         logging.FileHandler("app.log"),
+#         logging.StreamHandler()
+#     ]
+# )
 
 app = Flask(__name__)
 

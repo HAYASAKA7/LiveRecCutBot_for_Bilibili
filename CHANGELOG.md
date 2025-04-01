@@ -38,3 +38,6 @@
 ### 1.0.8 (2025-3-28)
 - Add encoder support for Intel CPU/GPU, AMD CPU/GPU, NVIDIA GPU.
 - Add tab switch for different settings.
+
+### 1.0.9 (2025-4-1)
+- Add log folders to save log files generated in different days.

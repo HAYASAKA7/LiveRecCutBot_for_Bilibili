@@ -1,13 +1,23 @@
 import os
+from logger_config import setup_logger
 import time
 from datetime import datetime, timedelta
 
-def delete_old_logs(log_dir='.', days_threshold=30):
+logger = setup_logger()
+
+def delete_old_logs(log_dir='.', days_threshold=7):
     """
     Delete old log files in the specified directory.
     :param log_dir: Log file directory, defaults to the current directory
     :param days_threshold: Threshold for deleting logs, defaults to 30 days
     """
+    if log_dir != 'Logs':
+        logger.warning(f"Illegal deleting! ")
+        return
+    if not os.path.exists(log_dir):
+        logger.info(f"Log directory '{log_dir}' does not exsit! ")
+        return
+
     # Acquire the current time
     now = time.time()
     # Calculate the time threshold for deleting logs
@@ -25,9 +35,9 @@ def delete_old_logs(log_dir='.', days_threshold=30):
                 if file_mtime < threshold_time:
                     # Delete the file
                     os.remove(file_path)
-                    print(f"Deleted old log file: {file_path}")
+                    logger.info(f"Deleted old log file: {file_path}")
             except Exception as e:
-                print(f"Error deleting file {file_path}: {e}")
+                logger.info(f"Error deleting file {file_path}: {e}")
 
 if __name__ == "__main__":
     # Call the function to delete old log files
